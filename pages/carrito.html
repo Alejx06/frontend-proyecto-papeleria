@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Carrito - PaperMart</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .carrito-page {
+            min-height: 100vh;
+            background: var(--light-bg);
+            padding: 2rem;
+        }
+
+        .carrito-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .carrito-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .carrito-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .carrito-items-container {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .carrito-vacio {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-light);
+        }
+
+        .carrito-vacio i {
+            font-size: 4rem;
+            color: var(--border-color);
+            margin-bottom: 1rem;
+        }
+
+        .carrito-item-row {
+            display: grid;
+            grid-template-columns: 80px 1fr auto auto;
+            gap: 1rem;
+            align-items: center;
+            padding: 1.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .carrito-item-row:last-child {
+            border-bottom: none;
+        }
+
+        .item-imagen {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+        }
+
+        .item-detalles h3 {
+            color: var(--secondary-color);
+            margin-bottom: 0.3rem;
+        }
+
+        .item-detalles p {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .item-cantidad {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+        }
+
+        .item-cantidad button {
+            background: none;
+            border: none;
+            padding: 0.5rem 0.8rem;
+            cursor: pointer;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .item-cantidad input {
+            width: 50px;
+            text-align: center;
+            border: none;
+            padding: 0.3rem;
+        }
+
+        .item-precio {
+            font-weight: bold;
+            color: var(--accent-color);
+            min-width: 80px;
+            text-align: right;
+        }
+
+        .item-eliminar {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .item-eliminar:hover {
+            background: #c0392b;
+        }
+
+        .resumen-compra {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .resumen-compra h2 {
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+        }
+
+        .resumen-fila {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .resumen-fila.total {
+            border-bottom: none;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            padding-bottom: 0;
+            margin-bottom: 0;
+        }
+
+        .resumen-label {
+            color: var(--text-color);
+        }
+
+        .resumen-valor {
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+
+        .acciones-compra {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .codigo-promocion {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .codigo-promocion input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .codigo-promocion button {
+            padding: 0.8rem 1.5rem;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .codigo-promocion button:hover {
+            background: #1a252f;
+        }
+
+        .continuar-comprando {
+            background: var(--secondary-color);
+            color: white;
+            text-align: center;
+            padding: 0.8rem;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .continuar-comprando:hover {
+            background: #1a252f;
+        }
+
+        .breadcrumb {
+            margin-bottom: 2rem;
+            color: var(--text-light);
+        }
+
+        .breadcrumb a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .carrito-content {
+                grid-template-columns: 1fr;
+            }
+
+            .carrito-item-row {
+                grid-template-columns: 60px 1fr;
+            }
+
+            .item-cantidad {
+                grid-column: 1 / -1;
+                width: fit-content;
+            }
+
+            .resumen-compra {
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navegación -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-file-alt"></i> PaperMart
+            </div>
+            <ul class="nav-menu">
+                <li><a href="../index.html" class="nav-link">Inicio</a></li>
+                <li><a href="../index.html#productos" class="nav-link">Productos</a></li>
+                <li><a href="../index.html#contacto" class="nav-link">Contacto</a></li>
+            </ul>
+            <div class="nav-icons">
+                <a href="carrito.html" class="cart-btn" style="text-decoration: none;">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span id="cart-count" class="cart-count">0</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido Main -->
+    <main class="carrito-page">
+        <div class="carrito-container">
+            <div class="breadcrumb">
+                <a href="../index.html"><i class="fas fa-home"></i> Inicio</a>
+                <span> / </span>
+                <span><i class="fas fa-shopping-cart"></i> Mi Carrito</span>
+            </div>
+
+            <div class="carrito-header">
+                <h1><i class="fas fa-shopping-cart"></i> Mi Carrito de Compras</h1>
+            </div>
+
+            <div class="carrito-content">
+                <!-- Items del Carrito -->
+                <div class="carrito-items-container">
+                    <div id="carrito-items" class="carrito-items">
+                        <!-- Los items se cargarán aquí dinamicamente -->
+                    </div>
+                </div>
+
+                <!-- Resumen de Compra -->
+                <div class="resumen-compra">
+                    <h2>Resumen de Compra</h2>
+
+                    <div class="codigo-promocion">
+                        <input type="text" placeholder="Código de promoción" id="promo-code">
+                        <button onclick="aplicarPromocion()">Aplicar</button>
+                    </div>
+
+                    <div class="resumen-fila">
+                        <span class="resumen-label">Subtotal:</span>
+                        <span class="resumen-valor" id="subtotal-resumen">$0.00</span>
+                    </div>
+
+                    <div class="resumen-fila">
+                        <span class="resumen-label">Descuento:</span>
+                        <span class="resumen-valor" id="descuento-resumen">$0.00</span>
+                    </div>
+
+                    <div class="resumen-fila">
+                        <span class="resumen-label">Envío:</span>
+                        <span class="resumen-valor" id="envio-resumen">$5.00</span>
+                    </div>
+
+                    <div class="resumen-fila">
+                        <span class="resumen-label">Impuesto (16%):</span>
+                        <span class="resumen-valor" id="impuesto-resumen">$0.00</span>
+                    </div>
+
+                    <div class="resumen-fila total">
+                        <span class="resumen-label">Total:</span>
+                        <span class="resumen-valor" id="total-resumen">$0.00</span>
+                    </div>
+
+                    <div class="acciones-compra">
+                        <button class="btn btn-primary" onclick="procederPago();" style="width: 100%;">
+                            <i class="fas fa-lock"></i> Proceder al Pago
+                        </button>
+                        <a href="../index.html#productos" class="continuar-comprando">
+                            <i class="fas fa-arrow-left"></i> Continuar Comprando
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Sobre Nosotros</h3>
+                    <p>PaperMart es tu tienda de papelería online de confianza con los mejores productos y precios.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Enlaces Rápidos</h3>
+                    <ul>
+                        <li><a href="../index.html">Inicio</a></li>
+                        <li><a href="../index.html#productos">Productos</a></li>
+                        <li><a href="../index.html#contacto">Contacto</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Síguenos</h3>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 PaperMart. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+
+        function renderizarCarrito() {
+            const carritoItems = document.getElementById('carrito-items');
+            const cartCount = document.getElementById('cart-count');
+
+            if (carrito.length === 0) {
+                carritoItems.innerHTML = `
+                    <div class="carrito-vacio">
+                        <i class="fas fa-shopping-cart"></i>
+                        <h3>Tu carrito está vacío</h3>
+                        <p>Agrega algunos productos para comenzar tu compra</p>
+                        <a href="../index.html#productos" class="btn btn-primary" style="margin-top: 1rem; display: inline-block;">
+                            <i class="fas fa-shopping-bag"></i> Ver Productos
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
+            carritoItems.innerHTML = carrito.map(item => `
+                <div class="carrito-item-row">
+                    <div class="item-imagen">${item.icono}</div>
+                    <div class="item-detalles">
+                        <h3>${item.nombre}</h3>
+                        <p>${item.precio.toFixed(2)}€ por unidad</p>
+                    </div>
+                    <div class="item-cantidad">
+                        <button onclick="cambiarCantidad('${item.id}', -1)">-</button>
+                        <input type="number" value="${item.cantidad}" readonly>
+                        <button onclick="cambiarCantidad('${item.id}', 1)">+</button>
+                    </div>
+                    <div class="item-precio">${(item.precio * item.cantidad).toFixed(2)}€</div>
+                    <button class="item-eliminar" onclick="eliminarItem('${item.id}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+
+            const totalItems = carrito.reduce((sum, item) => sum + item.cantidad, 0);
+            cartCount.textContent = totalItems;
+
+            actualizarResumen();
+        }
+
+        function actualizarResumen() {
+            const subtotal = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+            const descuento = 0;
+            const envio = 5.00;
+            const impuesto = (subtotal - descuento + envio) * 0.16;
+            const total = subtotal - descuento + envio + impuesto;
+
+            document.getElementById('subtotal-resumen').textContent = '$' + subtotal.toFixed(2);
+            document.getElementById('descuento-resumen').textContent = '$' + descuento.toFixed(2);
+            document.getElementById('impuesto-resumen').textContent = '$' + impuesto.toFixed(2);
+            document.getElementById('total-resumen').textContent = '$' + total.toFixed(2);
+        }
+
+        function cambiarCantidad(id, cambio) {
+            const item = carrito.find(i => i.id == id);
+            if (item) {
+                item.cantidad += cambio;
+                if (item.cantidad < 1) item.cantidad = 1;
+                localStorage.setItem('carrito', JSON.stringify(carrito));
+                renderizarCarrito();
+            }
+        }
+
+        function eliminarItem(id) {
+            if (confirm('¿Deseas eliminar este producto del carrito?')) {
+                const index = carrito.findIndex(i => i.id == id);
+                if (index > -1) {
+                    carrito.splice(index, 1);
+                    localStorage.setItem('carrito', JSON.stringify(carrito));
+                    renderizarCarrito();
+                }
+            }
+        }
+
+        function aplicarPromocion() {
+            const codigo = document.getElementById('promo-code').value;
+            alert('Código de promoción: ' + (codigo || 'no ingresado'));
+        }
+
+        function procederPago() {
+            if (carrito.length === 0) {
+                alert('Tu carrito está vacío');
+                return;
+            }
+            alert('¡Pago realizado exitosamente! Gracias por tu compra');
+            carrito.length = 0;
+            localStorage.setItem('carrito', JSON.stringify(carrito));
+            renderizarCarrito();
+        }
+
+        // Inicializar
+        renderizarCarrito();
+    </script>
+</body>
+</html>

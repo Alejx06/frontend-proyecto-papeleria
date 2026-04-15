@@ -1,0 +1,402 @@
+// ==================== BASE DE DATOS DE PRODUCTOS ====================
+const productos = [
+    {
+        id: 1,
+        nombre: "Cuaderno A4 Rayas",
+        categoria: "cuadernos",
+        precio: 4.99,
+        descripcion: "Cuaderno de 100 hojas rayadas",
+        icono: "📓"
+    },
+    {
+        id: 2,
+        nombre: "Cuaderno A4 Cuadriculado",
+        categoria: "cuadernos",
+        precio: 5.49,
+        descripcion: "Cuaderno de 100 hojas cuadriculadas",
+        icono: "📕"
+    },
+    {
+        id: 3,
+        nombre: "Bolígrafos Azules (paquete de 10)",
+        categoria: "boligrafos",
+        precio: 3.99,
+        descripcion: "Pack de 10 bolígrafos azules",
+        icono: "🖊️"
+    },
+    {
+        id: 4,
+        nombre: "Bolígrafos Negros (paquete de 10)",
+        categoria: "boligrafos",
+        precio: 3.99,
+        descripcion: "Pack de 10 bolígrafos negros",
+        icono: "✒️"
+    },
+    {
+        id: 5,
+        nombre: "Papel A4 (resma de 500)",
+        categoria: "papeles",
+        precio: 7.99,
+        descripcion: "Resma de 500 hojas de papel A4",
+        icono: "📄"
+    },
+    {
+        id: 6,
+        nombre: "Papel Opalina de Colores",
+        categoria: "papeles",
+        precio: 9.99,
+        descripcion: "Pack de 50 hojas de colores variados",
+        icono: "🎨"
+    },
+    {
+        id: 7,
+        nombre: "Marcadores Permanentes",
+        categoria: "marcadores",
+        precio: 8.99,
+        descripcion: "Pack de 12 marcadores de colores",
+        icono: "🖍️"
+    },
+    {
+        id: 8,
+        nombre: "Marcadores Fluorescentes",
+        categoria: "marcadores",
+        precio: 6.99,
+        descripcion: "Pack de 6 marcadores fluorescentes",
+        icono: "💡"
+    },
+    {
+        id: 9,
+        nombre: "Lapiceros HB (caja de 24)",
+        categoria: "boligrafos",
+        precio: 5.99,
+        descripcion: "Caja de 24 lapiceros HB de calidad",
+        icono: "✏️"
+    },
+    {
+        id: 10,
+        nombre: "Goma de Borrar (pack de 4)",
+        categoria: "papeles",
+        precio: 2.99,
+        descripcion: "Pack de 4 gomas de borrar estándar",
+        icono: "🧹"
+    },
+    {
+        id: 11,
+        nombre: "Regla Plástica 30cm",
+        categoria: "papeles",
+        precio: 1.99,
+        descripcion: "Regla plástica de 30 centímetros",
+        icono: "📏"
+    },
+    {
+        id: 12,
+        nombre: "Cuaderno Espiral",
+        categoria: "cuadernos",
+        precio: 6.49,
+        descripcion: "Cuaderno de espiral con 120 hojas",
+        icono: "🗒️"
+    }
+];
+
+// ==================== VARIABLES GLOBALES ====================
+let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+let currentFilter = 'todos';
+
+// ==================== INICIALIZACIÓN ====================
+document.addEventListener('DOMContentLoaded', function() {
+    renderizarProductos(productos);
+    actualizarCarrito();
+    configurarEventos();
+});
+
+// ==================== FUNCIONES DE PRODUCTOS ====================
+function renderizarProductos(productosAMostrar) {
+    const productsGrid = document.getElementById('products-grid');
+    productsGrid.innerHTML = '';
+
+    productosAMostrar.forEach(producto => {
+        const productCard = document.createElement('div');
+        productCard.className = 'product-card';
+        productCard.innerHTML = `
+            <div class="product-image">
+                ${producto.icono}
+            </div>
+            <div class="product-info">
+                <p class="product-category">${producto.categoria.toUpperCase()}</p>
+                <h3 class="product-name">${producto.nombre}</h3>
+                <p class="product-description">${producto.descripcion}</p>
+                <p class="product-price">$${producto.precio.toFixed(2)}</p>
+                <div class="product-bottom">
+                    <input type="number" class="quantity-input" value="1" min="1" max="99">
+                    <button class="add-to-cart-btn" onclick="agregarAlCarrito(${producto.id})">
+                        Agregar
+                    </button>
+                </div>
+            </div>
+        `;
+        productsGrid.appendChild(productCard);
+    });
+}
+
+function filterProducts(categoria) {
+    currentFilter = categoria;
+
+    // Actualizar botones de filtro
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+
+    // Filtrar y renderizar productos
+    if (categoria === 'todos') {
+        renderizarProductos(productos);
+    } else {
+        const productosFiltrados = productos.filter(p => p.categoria === categoria);
+        renderizarProductos(productosFiltrados);
+    }
+}
+
+// ==================== FUNCIONES DEL CARRITO ====================
+function agregarAlCarrito(productoId) {
+    const producto = productos.find(p => p.id === productoId);
+    const quantityInput = event.target.parentElement.querySelector('.quantity-input');
+    const cantidad = parseInt(quantityInput.value);
+
+    if (cantidad <= 0) {
+        alert('Por favor ingresa una cantidad válida');
+        return;
+    }
+
+    const itemCarrito = carrito.find(item => item.id === productoId);
+
+    if (itemCarrito) {
+        itemCarrito.cantidad += cantidad;
+    } else {
+        carrito.push({
+            id: producto.id,
+            nombre: producto.nombre,
+            precio: producto.precio,
+            cantidad: cantidad,
+            icono: producto.icono
+        });
+    }
+
+    guardarCarrito();
+    actualizarCarrito();
+    mostrarNotificacion('Producto agregado al carrito');
+    quantityInput.value = 1;
+}
+
+function eliminarDelCarrito(productoId) {
+    carrito = carrito.filter(item => item.id !== productoId);
+    guardarCarrito();
+    actualizarCarrito();
+}
+
+function actualizarCantidad(productoId, nuevaCantidad) {
+    const item = carrito.find(i => i.id === productoId);
+    if (item) {
+        if (nuevaCantidad <= 0) {
+            eliminarDelCarrito(productoId);
+        } else {
+            item.cantidad = nuevaCantidad;
+            guardarCarrito();
+            actualizarCarrito();
+        }
+    }
+}
+
+function actualizarCarrito() {
+    const cartCount = document.getElementById('cart-count');
+    const cartItems = document.getElementById('cart-items');
+
+    // Actualizar contador
+    const totalItems = carrito.reduce((sum, item) => sum + item.cantidad, 0);
+    cartCount.textContent = totalItems;
+
+    // Actualizar items del carrito
+    if (carrito.length === 0) {
+        cartItems.innerHTML = '<div class="empty-cart">Tu carrito está vacío</div>';
+    } else {
+        cartItems.innerHTML = carrito.map(item => `
+            <div class="cart-item">
+                <div class="cart-item-info">
+                    <h4>${item.icono} ${item.nombre}</h4>
+                    <p>Cantidad: <input type="number" value="${item.cantidad}" min="1" max="99" 
+                        onchange="actualizarCantidad(${item.id}, this.value)" style="width: 50px;">
+                    </p>
+                </div>
+                <div>
+                    <p class="cart-item-price">$${(item.precio * item.cantidad).toFixed(2)}</p>
+                    <button class="remove-item" onclick="eliminarDelCarrito(${item.id})">Eliminar</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Actualizar totales
+    const subtotal = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+    const impuesto = subtotal * 0.16;
+    const total = subtotal + impuesto;
+
+    document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+    document.getElementById('tax').textContent = `$${impuesto.toFixed(2)}`;
+    document.getElementById('total').textContent = `$${total.toFixed(2)}`;
+}
+
+function guardarCarrito() {
+    localStorage.setItem('carrito', JSON.stringify(carrito));
+}
+
+function checkout() {
+    if (carrito.length === 0) {
+        alert('Tu carrito está vacío');
+        return;
+    }
+
+    const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+    const impuesto = total * 0.16;
+    const totalFinal = total + impuesto;
+
+    const confirmar = confirm(
+        `Total de tu compra: $${totalFinal.toFixed(2)}\n\n¿Deseas proceder con el pago?`
+    );
+
+    if (confirmar) {
+        mostrarNotificacion('¡Compra realizada exitosamente!');
+        carrito = [];
+        guardarCarrito();
+        actualizarCarrito();
+        closeCart();
+    }
+}
+
+// ==================== FUNCIONES DEL MODAL ====================
+const modal = document.getElementById('cart-modal');
+const cartBtn = document.getElementById('cart-btn');
+const closeBtn = document.querySelector('.close');
+
+cartBtn.addEventListener('click', openCart);
+closeBtn.addEventListener('click', closeCart);
+
+window.addEventListener('click', function(event) {
+    if (event.target === modal) {
+        closeCart();
+    }
+});
+
+function openCart() {
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeCart() {
+    modal.classList.remove('show');
+    document.body.style.overflow = 'auto';
+}
+
+// ==================== FORMULARIO DE CONTACTO ====================
+function configurarEventos() {
+    const contactForm = document.getElementById('contact-form');
+    if (contactForm) {
+        contactForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const inputs = this.querySelectorAll('input, textarea');
+            inputs.forEach(input => input.value = '');
+            mostrarNotificacion('¡Mensaje enviado exitosamente! Nos pondremos en contacto pronto.');
+        });
+    }
+
+    // Configurar menú hamburguesa
+    const hamburger = document.getElementById('hamburger');
+    if (hamburger) {
+        hamburger.addEventListener('click', toggleMenu);
+    }
+}
+
+function toggleMenu() {
+    const navMenu = document.querySelector('.nav-menu');
+    if (navMenu.style.display === 'flex') {
+        navMenu.style.display = 'none';
+    } else {
+        navMenu.style.display = 'flex';
+        navMenu.style.flexDirection = 'column';
+        navMenu.style.position = 'absolute';
+        navMenu.style.top = '60px';
+        navMenu.style.left = '0';
+        navMenu.style.right = '0';
+        navMenu.style.backgroundColor = 'var(--primary-color)';
+        navMenu.style.zIndex = '999';
+    }
+}
+
+// ==================== NOTIFICACIONES ====================
+function mostrarNotificacion(mensaje) {
+    // Crear elemento de notificación
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        background: var(--success-color);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 5px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 3000;
+        animation: slideIn 0.3s ease;
+    `;
+    notification.textContent = mensaje;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Agregar estilos de animación
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(400px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes slideOut {
+        from {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(400px);
+        }
+    }
+`;
+document.head.appendChild(style);
+
+// ==================== BÚSQUEDA Y FILTROS AVANZADOS ====================
+function buscarProductos(termino) {
+    const termino_lower = termino.toLowerCase();
+    const productosFiltrados = productos.filter(p =>
+        p.nombre.toLowerCase().includes(termino_lower) ||
+        p.descripcion.toLowerCase().includes(termino_lower)
+    );
+    renderizarProductos(productosFiltrados);
+}
+
+// ==================== SYNC CON LOCALSTORAGE ====================
+window.addEventListener('storage', function(e) {
+    if (e.key === 'carrito') {
+        carrito = JSON.parse(e.newValue) || [];
+        actualizarCarrito();
+    }
+});

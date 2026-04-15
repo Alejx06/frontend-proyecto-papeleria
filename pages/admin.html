@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - PaperMart</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .admin-container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 100vh;
+            background: var(--light-bg);
+        }
+
+        .sidebar {
+            background: var(--secondary-color);
+            color: white;
+            padding: 2rem;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            margin-bottom: 2rem;
+            font-size: 1.3rem;
+        }
+
+        .sidebar ul {
+            list-style: none;
+        }
+
+        .sidebar ul li {
+            margin-bottom: 1rem;
+        }
+
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            display: block;
+            padding: 0.8rem 1rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar a:hover,
+        .sidebar a.active {
+            background: var(--primary-color);
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 2rem;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .admin-card {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 1rem 0;
+        }
+
+        .stat-label {
+            color: var(--text-light);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--light-bg);
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+
+        tr:hover {
+            background: var(--light-bg);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .edit-btn {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .delete-btn {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .edit-btn:hover {
+            background: #2980b9;
+        }
+
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+
+        .back-btn {
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .admin-container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: static;
+                width: 100%;
+                height: auto;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .table-responsive {
+                font-size: 0.9rem;
+            }
+
+            th, td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <h2><i class="fas fa-cog"></i> Admin</h2>
+            <ul>
+                <li><a href="#" onclick="showSection('dashboard')" class="nav-link active"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="#" onclick="showSection('productos')" class="nav-link"><i class="fas fa-box"></i> Productos</a></li>
+                <li><a href="#" onclick="showSection('pedidos')" class="nav-link"><i class="fas fa-shopping-bag"></i> Pedidos</a></li>
+                <li><a href="#" onclick="showSection('clientes')" class="nav-link"><i class="fas fa-users"></i> Clientes</a></li>
+                <li><a href="#" onclick="showSection('reportes')" class="nav-link"><i class="fas fa-file-csv"></i> Reportes</a></li>
+                <li><a href="#" onclick="showSection('configuracion')" class="nav-link"><i class="fas fa-sliders-h"></i> Configuración</a></li>
+                <li style="margin-top: 2rem; border-top: 1px solid #555; padding-top: 1rem;">
+                    <a href="../index.html" class="nav-link"><i class="fas fa-home"></i> Volver a Inicio</a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard -->
+            <section id="dashboard" class="content-section active">
+                <h1>Dashboard</h1>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <i class="fas fa-shopping-cart" style="font-size: 2rem; color: var(--primary-color);"></i>
+                        <div class="stat-label">Ventas Totales</div>
+                        <div class="stat-value">$45,320.00</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-box" style="font-size: 2rem; color: #27ae60;"></i>
+                        <div class="stat-label">Productos</div>
+                        <div class="stat-value">156</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-users" style="font-size: 2rem; color: #e67e22;"></i>
+                        <div class="stat-label">Clientes</div>
+                        <div class="stat-value">1,243</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-check-circle" style="font-size: 2rem; color: #9b59b6;"></i>
+                        <div class="stat-label">Pedidos Completados</div>
+                        <div class="stat-value">892</div>
+                    </div>
+                </div>
+                <div class="admin-card">
+                    <h2>Actividad Reciente</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Evento</th>
+                                <th>Detalles</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2026-04-14 10:30</td>
+                                <td><span style="background: #d4edda; padding: 0.3rem 0.6rem; border-radius: 3px; color: #155724;">Venta</span></td>
+                                <td>Pedido #1025 completado</td>
+                            </tr>
+                            <tr>
+                                <td>2026-04-14 09:15</td>
+                                <td><span style="background: #cfe2ff; padding: 0.3rem 0.6rem; border-radius: 3px; color: #004085;">Nuevo Cliente</span></td>
+                                <td>Juan Pérez se registró</td>
+                            </tr>
+                            <tr>
+                                <td>2026-04-13 15:45</td>
+                                <td><span style="background: #fff3cd; padding: 0.3rem 0.6rem; border-radius: 3px; color: #664d03;">Inventario</span></td>
+                                <td>Stock bajo en Cuaderno A4</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Productos -->
+            <section id="productos" class="content-section">
+                <button class="btn btn-secondary back-btn" onclick="showSection('dashboard')"><i class="fas fa-arrow-left"></i> Volver</button>
+                <h1>Gestión de Productos</h1>
+
+                <div class="admin-card">
+                    <h2>Agregar Nuevo Producto</h2>
+                    <form id="product-form">
+                        <div class="form-group">
+                            <label>Nombre del Producto</label>
+                            <input type="text" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Categoría</label>
+                            <select required>
+                                <option value="">Seleccionar categoría</option>
+                                <option value="cuadernos">Cuadernos</option>
+                                <option value="papeles">Papeles</option>
+                                <option value="boligrafos">Bolígrafos</option>
+                                <option value="marcadores">Marcadores</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Precio</label>
+                            <input type="number" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Descripción</label>
+                            <textarea required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Stock</label>
+                            <input type="number" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Agregar Producto</button>
+                    </form>
+                </div>
+
+                <div class="admin-card">
+                    <h2>Productos Existentes</h2>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Categoría</th>
+                                    <th>Precio</th>
+                                    <th>Stock</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="products-table">
+                                <tr>
+                                    <td>1</td>
+                                    <td>Cuaderno A4 Rayas</td>
+                                    <td>Cuadernos</td>
+                                    <td>$4.99</td>
+                                    <td>45</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="action-btn edit-btn"><i class="fas fa-edit"></i></button>
+                                            <button class="action-btn delete-btn"><i class="fas fa-trash"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pedidos -->
+            <section id="pedidos" class="content-section">
+                <button class="btn btn-secondary back-btn" onclick="showSection('dashboard')"><i class="fas fa-arrow-left"></i> Volver</button>
+                <h1>Gestión de Pedidos</h1>
+                <div class="admin-card">
+                    <h2>Pedidos Recientes</h2>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID Pedido</th>
+                                    <th>Cliente</th>
+                                    <th>Fecha</th>
+                                    <th>Total</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>#1025</td>
+                                    <td>Carlos López</td>
+                                    <td>2026-04-14</td>
+                                    <td>$234.56</td>
+                                    <td><span style="background: #d4edda; padding: 0.3rem 0.6rem; border-radius: 3px; color: #155724;">Completado</span></td>
+                                    <td><button class="action-btn edit-btn"><i class="fas fa-eye"></i> Ver</button></td>
+                                </tr>
+                                <tr>
+                                    <td>#1024</td>
+                                    <td>María García</td>
+                                    <td>2026-04-13</td>
+                                    <td>$145.80</td>
+                                    <td><span style="background: #cfe2ff; padding: 0.3rem 0.6rem; border-radius: 3px; color: #004085;">Pendiente</span></td>
+                                    <td><button class="action-btn edit-btn"><i class="fas fa-eye"></i> Ver</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Clientes -->
+            <section id="clientes" class="content-section">
+                <button class="btn btn-secondary back-btn" onclick="showSection('dashboard')"><i class="fas fa-arrow-left"></i> Volver</button>
+                <h1>Gestión de Clientes</h1>
+                <div class="admin-card">
+                    <h2>Lista de Clientes</h2>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Email</th>
+                                    <th>Teléfono</th>
+                                    <th>Compras</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1001</td>
+                                    <td>Carlos López</td>
+                                    <td>carlos@email.com</td>
+                                    <td>+34 612 345 678</td>
+                                    <td>15</td>
+                                    <td><button class="action-btn edit-btn"><i class="fas fa-eye"></i> Ver</button></td>
+                                </tr>
+                                <tr>
+                                    <td>1002</td>
+                                    <td>María García</td>
+                                    <td>maria@email.com</td>
+                                    <td>+34 623 456 789</td>
+                                    <td>8</td>
+                                    <td><button class="action-btn edit-btn"><i class="fas fa-eye"></i> Ver</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Reportes -->
+            <section id="reportes" class="content-section">
+                <button class="btn btn-secondary back-btn" onclick="showSection('dashboard')"><i class="fas fa-arrow-left"></i> Volver</button>
+                <h1>Reportes</h1>
+                <div class="admin-card">
+                    <h2>Generar Reportes</h2>
+                    <div class="btn-group">
+                        <button class="btn btn-primary"><i class="fas fa-file-csv"></i> Reporte de Ventas</button>
+                        <button class="btn btn-primary"><i class="fas fa-file-csv"></i> Reporte de Inventario</button>
+                        <button class="btn btn-primary"><i class="fas fa-file-csv"></i> Reporte de Clientes</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Configuración -->
+            <section id="configuracion" class="content-section">
+                <button class="btn btn-secondary back-btn" onclick="showSection('dashboard')"><i class="fas fa-arrow-left"></i> Volver</button>
+                <h1>Configuración</h1>
+                <div class="admin-card">
+                    <h2>Configuración de la Tienda</h2>
+                    <form id="settings-form">
+                        <div class="form-group">
+                            <label>Nombre de la Tienda</label>
+                            <input type="text" value="PaperMart">
+                        </div>
+                        <div class="form-group">
+                            <label>Email de Contacto</label>
+                            <input type="email" value="info@papermart.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Teléfono</label>
+                            <input type="tel" value="+34 123 456 789">
+                        </div>
+                        <div class="form-group">
+                            <label>Dirección</label>
+                            <input type="text" value="Calle Principal 123, Madrid">
+                        </div>
+                        <div class="form-group">
+                            <label>Porcentaje de Impuesto (%)</label>
+                            <input type="number" step="0.01" value="16">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        function showSection(sectionId) {
+            // Ocultar todas las secciones
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Mostrar la sección seleccionada
+            document.getElementById(sectionId).classList.add('active');
+
+            // Actualizar navegación
+            document.querySelectorAll('.sidebar a').forEach(link => {
+                link.classList.remove('active');
+            });
+            event.target.closest('a').classList.add('active');
+        }
+
+        // Formularios
+        document.getElementById('product-form')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Producto agregado exitosamente');
+            this.reset();
+        });
+
+        document.getElementById('settings-form')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Configuración guardada exitosamente');
+        });
+    </script>
+</body>
+</html>
