@@ -355,7 +355,6 @@
                                     <th>Categoría</th>
                                     <th>Precio</th>
                                     <th>Stock</th>
-                                    <th>Estado</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
@@ -509,161 +508,34 @@
         </main>
     </div>
 
-        <script>
-        const API_URL = 'http://localhost:8080/api/productos';
-
-        // ── Navegación entre secciones ──────────────────────────────
+    <script>
         function showSection(sectionId) {
-            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            // Ocultar todas las secciones
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Mostrar la sección seleccionada
             document.getElementById(sectionId).classList.add('active');
-            document.querySelectorAll('.sidebar a').forEach(l => l.classList.remove('active'));
+
+            // Actualizar navegación
+            document.querySelectorAll('.sidebar a').forEach(link => {
+                link.classList.remove('active');
+            });
             event.target.closest('a').classList.add('active');
-            if (sectionId === 'productos') cargarProductos();
-            if (sectionId === 'dashboard') cargarEstadisticas();
         }
 
-        // ── Cargar estadísticas en el dashboard ─────────────────────
-        async function cargarEstadisticas() {
-            try {
-                const res = await fetch(API_URL);
-                const prods = await res.json();
-                const activos = prods.filter(p => p.activo).length;
-                const statValues = document.querySelectorAll('.stat-value');
-                if (statValues[1]) statValues[1].textContent = activos;
-            } catch (e) {
-                console.warn('No se pudieron cargar estadísticas del backend');
-            }
-        }
-
-        // ── Cargar tabla de productos desde el backend ───────────────
-        async function cargarProductos() {
-            try {
-                const res = await fetch(API_URL);
-                const prods = await res.json();
-                const tbody = document.getElementById('products-table');
-
-                tbody.innerHTML = prods.map(p => `
-                    <tr>
-                        <td>${p.id}</td>
-                        <td>${p.nombre}</td>
-                        <td>${p.categoria || '-'}</td>
-                        <td>$${p.precio.toFixed(2)}</td>
-                        <td>${p.stock}</td>
-                        <td>
-                            <span style="background:${p.activo ? '#d4edda' : '#f8d7da'};
-                                  padding: 3px 8px; border-radius:3px;
-                                  color:${p.activo ? '#155724' : '#721c24'}">
-                                ${p.activo ? 'Activo' : 'Inactivo'}
-                            </span>
-                        </td>
-                        <td>
-                            <div class="btn-group">
-                                <button class="action-btn edit-btn" onclick="editarProducto(${p.id})">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="action-btn delete-btn" onclick="eliminarProducto(${p.id})">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                                ${p.activo ? `<button class="action-btn" style="background:#e67e22;color:white" onclick="desactivarProducto(${p.id})">
-                                    <i class="fas fa-ban"></i> Desactivar
-                                </button>` : ''}
-                            </div>
-                        </td>
-                    </tr>
-                `).join('');
-            } catch (e) {
-                alert('❌ Error al cargar productos. ¿Está el backend corriendo en localhost:8080?');
-            }
-        }
-
-        // ── Crear producto ───────────────────────────────────────────
-        document.getElementById('product-form')?.addEventListener('submit', async function(e) {
+        // Formularios
+        document.getElementById('product-form')?.addEventListener('submit', function(e) {
             e.preventDefault();
-            const inputs = this.querySelectorAll('input, select, textarea');
-            const nuevo = {
-                nombre: inputs[0].value,
-                categoria: inputs[1].value,
-                precio: parseFloat(inputs[2].value),
-                descripcion: inputs[3].value,
-                stock: parseInt(inputs[4].value),
-                activo: true
-            };
-            try {
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(nuevo)
-                });
-                if (!res.ok) throw new Error();
-                alert('✅ Producto creado exitosamente');
-                this.reset();
-                cargarProductos();
-            } catch {
-                alert('❌ Error al crear el producto. Verifica que el backend esté corriendo.');
-            }
+            alert('Producto agregado exitosamente');
+            this.reset();
         });
-
-        // ── Eliminar producto ────────────────────────────────────────
-        async function eliminarProducto(id) {
-            if (!confirm('¿Seguro que deseas eliminar este producto?')) return;
-            try {
-                await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-                alert('✅ Producto eliminado correctamente');
-                cargarProductos();
-            } catch {
-                alert('❌ Error al eliminar el producto');
-            }
-        }
-
-        // ── Desactivar producto ──────────────────────────────────────
-        async function desactivarProducto(id) {
-            if (!confirm('¿Desactivar este producto? Seguirá en la base de datos.')) return;
-            try {
-                await fetch(`${API_URL}/${id}/desactivar`, { method: 'PATCH' });
-                alert('✅ Producto desactivado');
-                cargarProductos();
-            } catch {
-                alert('❌ Error al desactivar el producto');
-            }
-        }
-
-        // ── Editar producto ──────────────────────────────────────────
-        async function editarProducto(id) {
-            try {
-                const res = await fetch(`${API_URL}/${id}`);
-                const p = await res.json();
-
-                const nombre = prompt('Nombre:', p.nombre);
-                if (!nombre) return;
-                const precio = prompt('Precio:', p.precio);
-                const stock = prompt('Stock:', p.stock);
-                const descripcion = prompt('Descripción:', p.descripcion || '');
-
-                await fetch(`${API_URL}/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        ...p,
-                        nombre,
-                        precio: parseFloat(precio),
-                        stock: parseInt(stock),
-                        descripcion
-                    })
-                });
-                alert('✅ Producto actualizado correctamente');
-                cargarProductos();
-            } catch {
-                alert('❌ Error al editar el producto');
-            }
-        }
 
         document.getElementById('settings-form')?.addEventListener('submit', function(e) {
             e.preventDefault();
-            alert('✅ Configuración guardada exitosamente');
+            alert('Configuración guardada exitosamente');
         });
-
-        // Cargar estadísticas al inicio
-        cargarEstadisticas();
     </script>
 </body>
 </html>

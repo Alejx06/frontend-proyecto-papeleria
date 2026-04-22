@@ -1,70 +1,115 @@
-// ==================== CONEXIÓN AL BACKEND ====================
-const API_URL = 'http://localhost:8080/api/productos';
-
-// Array local que se llenará desde el backend
-let productos = [];
+// ==================== BASE DE DATOS DE PRODUCTOS ====================
+const productos = [
+    {
+        id: 1,
+        nombre: "Cuaderno A4 Rayas",
+        categoria: "cuadernos",
+        precio: 4.99,
+        descripcion: "Cuaderno de 100 hojas rayadas",
+        icono: "📓"
+    },
+    {
+        id: 2,
+        nombre: "Cuaderno A4 Cuadriculado",
+        categoria: "cuadernos",
+        precio: 5.49,
+        descripcion: "Cuaderno de 100 hojas cuadriculadas",
+        icono: "📕"
+    },
+    {
+        id: 3,
+        nombre: "Bolígrafos Azules (paquete de 10)",
+        categoria: "boligrafos",
+        precio: 3.99,
+        descripcion: "Pack de 10 bolígrafos azules",
+        icono: "🖊️"
+    },
+    {
+        id: 4,
+        nombre: "Bolígrafos Negros (paquete de 10)",
+        categoria: "boligrafos",
+        precio: 3.99,
+        descripcion: "Pack de 10 bolígrafos negros",
+        icono: "✒️"
+    },
+    {
+        id: 5,
+        nombre: "Papel A4 (resma de 500)",
+        categoria: "papeles",
+        precio: 7.99,
+        descripcion: "Resma de 500 hojas de papel A4",
+        icono: "📄"
+    },
+    {
+        id: 6,
+        nombre: "Papel Opalina de Colores",
+        categoria: "papeles",
+        precio: 9.99,
+        descripcion: "Pack de 50 hojas de colores variados",
+        icono: "🎨"
+    },
+    {
+        id: 7,
+        nombre: "Marcadores Permanentes",
+        categoria: "marcadores",
+        precio: 8.99,
+        descripcion: "Pack de 12 marcadores de colores",
+        icono: "🖍️"
+    },
+    {
+        id: 8,
+        nombre: "Marcadores Fluorescentes",
+        categoria: "marcadores",
+        precio: 6.99,
+        descripcion: "Pack de 6 marcadores fluorescentes",
+        icono: "💡"
+    },
+    {
+        id: 9,
+        nombre: "Lapiceros HB (caja de 24)",
+        categoria: "boligrafos",
+        precio: 5.99,
+        descripcion: "Caja de 24 lapiceros HB de calidad",
+        icono: "✏️"
+    },
+    {
+        id: 10,
+        nombre: "Goma de Borrar (pack de 4)",
+        categoria: "papeles",
+        precio: 2.99,
+        descripcion: "Pack de 4 gomas de borrar estándar",
+        icono: "🧹"
+    },
+    {
+        id: 11,
+        nombre: "Regla Plástica 30cm",
+        categoria: "papeles",
+        precio: 1.99,
+        descripcion: "Regla plástica de 30 centímetros",
+        icono: "📏"
+    },
+    {
+        id: 12,
+        nombre: "Cuaderno Espiral",
+        categoria: "cuadernos",
+        precio: 6.49,
+        descripcion: "Cuaderno de espiral con 120 hojas",
+        icono: "🗒️"
+    }
+];
 
 // ==================== VARIABLES GLOBALES ====================
 let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
 let currentFilter = 'todos';
 
 // ==================== INICIALIZACIÓN ====================
-document.addEventListener('DOMContentLoaded', async function() {
-    await cargarProductosDesdeBackend();
+document.addEventListener('DOMContentLoaded', function() {
+    renderizarProductos(productos);
     actualizarCarrito();
     configurarEventos();
 });
 
-// ==================== CARGAR DESDE BACKEND ====================
-async function cargarProductosDesdeBackend() {
-    try {
-        const response = await fetch(API_URL);
-        if (!response.ok) throw new Error('Error al conectar con el backend');
-
-        const datos = await response.json();
-
-        // Adaptar los datos del backend al formato del frontend
-        productos = datos
-            .filter(p => p.activo)
-            .map(p => ({
-                id: p.id,
-                nombre: p.nombre,
-                categoria: (p.categoria || 'otros').toLowerCase(),
-                precio: p.precio,
-                descripcion: p.descripcion || '',
-                stock: p.stock,
-                icono: obtenerIcono(p.categoria)
-            }));
-
-        renderizarProductos(productos);
-
-    } catch (error) {
-        console.warn('Backend no disponible, usando datos de ejemplo:', error);
-        // Datos de respaldo si el backend no está disponible
-        productos = [
-            { id: 1, nombre: "Cuaderno A4 Rayas", categoria: "cuadernos", precio: 4.99, descripcion: "Cuaderno de 100 hojas rayadas", icono: "📓", stock: 10 },
-            { id: 2, nombre: "Lápiz HB", categoria: "boligrafos", precio: 1.20, descripcion: "Lápiz grafito", icono: "✏️", stock: 50 },
-            { id: 3, nombre: "Papel A4 (resma 500)", categoria: "papeles", precio: 7.99, descripcion: "Resma de 500 hojas A4", icono: "📄", stock: 20 },
-            { id: 4, nombre: "Marcadores de colores", categoria: "marcadores", precio: 8.99, descripcion: "Pack 12 marcadores", icono: "🖍️", stock: 15 }
-        ];
-        renderizarProductos(productos);
-        mostrarNotificacion('⚠️ Mostrando productos de ejemplo (backend desconectado)');
-    }
-}
-
-// Asigna un ícono según la categoría
-function obtenerIcono(categoria) {
-    const iconos = {
-        'cuadernos': '📓',
-        'papeles': '📄',
-        'boligrafos': '🖊️',
-        'lapices': '✏️',
-        'marcadores': '🖍️',
-        'utiles': '✂️'
-    };
-    return iconos[(categoria || '').toLowerCase()] || '📦';
-}
-
+// ==================== FUNCIONES DE PRODUCTOS ====================
 function renderizarProductos(productosAMostrar) {
     const productsGrid = document.getElementById('products-grid');
     productsGrid.innerHTML = '';

@@ -28,9 +28,15 @@ def main():
     with socketserver.TCPServer(("", PORT), MyHTTPRequestHandler) as httpd:
         url = f"http://localhost:{PORT}"
         print(f"""
+╔════════════════════════════════════════╗
+║         🎉 PaperMart Local Server       ║
+╚════════════════════════════════════════╝
 
+✅ Servidor corriendo en: {url}
+📁 Directorio: {DIRECTORY}
+🛑 Presiona Ctrl+C para detener
 
-
+Abriendo navegador...
 """)
         
         # Abrir navegador automáticamente
