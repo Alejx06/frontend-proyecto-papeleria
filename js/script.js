@@ -1,113 +1,65 @@
-// ==================== BASE DE DATOS DE PRODUCTOS ====================
-const productos = [
-    {
-        id: 1,
-        nombre: "Cuaderno A4 Rayas",
-        categoria: "cuadernos",
-        precio: 4.99,
-        descripcion: "Cuaderno de 100 hojas rayadas",
-        icono: "📓"
-    },
-    {
-        id: 2,
-        nombre: "Cuaderno A4 Cuadriculado",
-        categoria: "cuadernos",
-        precio: 5.49,
-        descripcion: "Cuaderno de 100 hojas cuadriculadas",
-        icono: "📕"
-    },
-    {
-        id: 3,
-        nombre: "Bolígrafos Azules (paquete de 10)",
-        categoria: "boligrafos",
-        precio: 3.99,
-        descripcion: "Pack de 10 bolígrafos azules",
-        icono: "🖊️"
-    },
-    {
-        id: 4,
-        nombre: "Bolígrafos Negros (paquete de 10)",
-        categoria: "boligrafos",
-        precio: 3.99,
-        descripcion: "Pack de 10 bolígrafos negros",
-        icono: "✒️"
-    },
-    {
-        id: 5,
-        nombre: "Papel A4 (resma de 500)",
-        categoria: "papeles",
-        precio: 7.99,
-        descripcion: "Resma de 500 hojas de papel A4",
-        icono: "📄"
-    },
-    {
-        id: 6,
-        nombre: "Papel Opalina de Colores",
-        categoria: "papeles",
-        precio: 9.99,
-        descripcion: "Pack de 50 hojas de colores variados",
-        icono: "🎨"
-    },
-    {
-        id: 7,
-        nombre: "Marcadores Permanentes",
-        categoria: "marcadores",
-        precio: 8.99,
-        descripcion: "Pack de 12 marcadores de colores",
-        icono: "🖍️"
-    },
-    {
-        id: 8,
-        nombre: "Marcadores Fluorescentes",
-        categoria: "marcadores",
-        precio: 6.99,
-        descripcion: "Pack de 6 marcadores fluorescentes",
-        icono: "💡"
-    },
-    {
-        id: 9,
-        nombre: "Lapiceros HB (caja de 24)",
-        categoria: "boligrafos",
-        precio: 5.99,
-        descripcion: "Caja de 24 lapiceros HB de calidad",
-        icono: "✏️"
-    },
-    {
-        id: 10,
-        nombre: "Goma de Borrar (pack de 4)",
-        categoria: "papeles",
-        precio: 2.99,
-        descripcion: "Pack de 4 gomas de borrar estándar",
-        icono: "🧹"
-    },
-    {
-        id: 11,
-        nombre: "Regla Plástica 30cm",
-        categoria: "papeles",
-        precio: 1.99,
-        descripcion: "Regla plástica de 30 centímetros",
-        icono: "📏"
-    },
-    {
-        id: 12,
-        nombre: "Cuaderno Espiral",
-        categoria: "cuadernos",
-        precio: 6.49,
-        descripcion: "Cuaderno de espiral con 120 hojas",
-        icono: "🗒️"
-    }
-];
+// ==================== CONEXIÓN AL BACKEND ====================
+const API_URL = 'http://localhost:8080/api/productos';
+
+let productos = [];
 
 // ==================== VARIABLES GLOBALES ====================
 let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
 let currentFilter = 'todos';
 
 // ==================== INICIALIZACIÓN ====================
-document.addEventListener('DOMContentLoaded', function() {
-    renderizarProductos(productos);
+document.addEventListener('DOMContentLoaded', async function() {
+    await cargarProductosDesdeBackend();
     actualizarCarrito();
     configurarEventos();
 });
+
+// ==================== CARGAR DESDE BACKEND ====================
+async function cargarProductosDesdeBackend() {
+    try {
+        const response = await fetch(API_URL);
+        if (!response.ok) throw new Error('Error al conectar con el backend');
+
+        const datos = await response.json();
+
+        productos = datos
+            .filter(p => p.activo)
+            .map(p => ({
+                id: p.id,
+                nombre: p.nombre,
+                categoria: (p.categoria || 'otros').toLowerCase(),
+                precio: p.precio,
+                descripcion: p.descripcion || '',
+                stock: p.stock,
+                icono: obtenerIcono(p.categoria)
+            }));
+
+        renderizarProductos(productos);
+
+    } catch (error) {
+        console.warn('Backend no disponible, usando datos de ejemplo:', error);
+        productos = [
+            { id: 1, nombre: "Cuaderno A4 Rayas", categoria: "cuadernos", precio: 4.99, descripcion: "Cuaderno de 100 hojas rayadas", icono: "📓", stock: 10 },
+            { id: 2, nombre: "Lápiz HB", categoria: "boligrafos", precio: 1.20, descripcion: "Lápiz grafito", icono: "✏️", stock: 50 },
+            { id: 3, nombre: "Papel A4 (resma 500)", categoria: "papeles", precio: 7.99, descripcion: "Resma de 500 hojas A4", icono: "📄", stock: 20 },
+            { id: 4, nombre: "Marcadores de colores", categoria: "marcadores", precio: 8.99, descripcion: "Pack 12 marcadores", icono: "🖍️", stock: 15 }
+        ];
+        renderizarProductos(productos);
+        mostrarNotificacion('Mostrando productos de ejemplo (backend desconectado)');
+    }
+}
+
+function obtenerIcono(categoria) {
+    const iconos = {
+        'cuadernos': '📓',
+        'papeles': '📄',
+        'boligrafos': '🖊️',
+        'lapices': '✏️',
+        'marcadores': '🖍️',
+        'utiles': '✂️'
+    };
+    return iconos[(categoria || '').toLowerCase()] || '📦';
+}
 
 // ==================== FUNCIONES DE PRODUCTOS ====================
 function renderizarProductos(productosAMostrar) {
@@ -140,19 +92,12 @@ function renderizarProductos(productosAMostrar) {
 
 function filterProducts(categoria) {
     currentFilter = categoria;
-
-    // Actualizar botones de filtro
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
-
-    // Filtrar y renderizar productos
     if (categoria === 'todos') {
         renderizarProductos(productos);
     } else {
-        const productosFiltrados = productos.filter(p => p.categoria === categoria);
-        renderizarProductos(productosFiltrados);
+        renderizarProductos(productos.filter(p => p.categoria === categoria));
     }
 }
 
@@ -162,23 +107,13 @@ function agregarAlCarrito(productoId) {
     const quantityInput = event.target.parentElement.querySelector('.quantity-input');
     const cantidad = parseInt(quantityInput.value);
 
-    if (cantidad <= 0) {
-        alert('Por favor ingresa una cantidad válida');
-        return;
-    }
+    if (cantidad <= 0) { alert('Por favor ingresa una cantidad válida'); return; }
 
     const itemCarrito = carrito.find(item => item.id === productoId);
-
     if (itemCarrito) {
         itemCarrito.cantidad += cantidad;
     } else {
-        carrito.push({
-            id: producto.id,
-            nombre: producto.nombre,
-            precio: producto.precio,
-            cantidad: cantidad,
-            icono: producto.icono
-        });
+        carrito.push({ id: producto.id, nombre: producto.nombre, precio: producto.precio, cantidad: cantidad, icono: producto.icono });
     }
 
     guardarCarrito();
@@ -196,25 +131,17 @@ function eliminarDelCarrito(productoId) {
 function actualizarCantidad(productoId, nuevaCantidad) {
     const item = carrito.find(i => i.id === productoId);
     if (item) {
-        if (nuevaCantidad <= 0) {
-            eliminarDelCarrito(productoId);
-        } else {
-            item.cantidad = nuevaCantidad;
-            guardarCarrito();
-            actualizarCarrito();
-        }
+        if (nuevaCantidad <= 0) { eliminarDelCarrito(productoId); }
+        else { item.cantidad = nuevaCantidad; guardarCarrito(); actualizarCarrito(); }
     }
 }
 
 function actualizarCarrito() {
     const cartCount = document.getElementById('cart-count');
     const cartItems = document.getElementById('cart-items');
-
-    // Actualizar contador
     const totalItems = carrito.reduce((sum, item) => sum + item.cantidad, 0);
     cartCount.textContent = totalItems;
 
-    // Actualizar items del carrito
     if (carrito.length === 0) {
         cartItems.innerHTML = '<div class="empty-cart">Tu carrito está vacío</div>';
     } else {
@@ -222,9 +149,8 @@ function actualizarCarrito() {
             <div class="cart-item">
                 <div class="cart-item-info">
                     <h4>${item.icono} ${item.nombre}</h4>
-                    <p>Cantidad: <input type="number" value="${item.cantidad}" min="1" max="99" 
-                        onchange="actualizarCantidad(${item.id}, this.value)" style="width: 50px;">
-                    </p>
+                    <p>Cantidad: <input type="number" value="${item.cantidad}" min="1" max="99"
+                        onchange="actualizarCantidad(${item.id}, this.value)" style="width: 50px;"></p>
                 </div>
                 <div>
                     <p class="cart-item-price">$${(item.precio * item.cantidad).toFixed(2)}</p>
@@ -234,66 +160,34 @@ function actualizarCarrito() {
         `).join('');
     }
 
-    // Actualizar totales
     const subtotal = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
     const impuesto = subtotal * 0.16;
-    const total = subtotal + impuesto;
-
     document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
     document.getElementById('tax').textContent = `$${impuesto.toFixed(2)}`;
-    document.getElementById('total').textContent = `$${total.toFixed(2)}`;
+    document.getElementById('total').textContent = `$${(subtotal + impuesto).toFixed(2)}`;
 }
 
-function guardarCarrito() {
-    localStorage.setItem('carrito', JSON.stringify(carrito));
-}
+function guardarCarrito() { localStorage.setItem('carrito', JSON.stringify(carrito)); }
 
 function checkout() {
-    if (carrito.length === 0) {
-        alert('Tu carrito está vacío');
-        return;
-    }
-
+    if (carrito.length === 0) { alert('Tu carrito está vacío'); return; }
     const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
-    const impuesto = total * 0.16;
-    const totalFinal = total + impuesto;
-
-    const confirmar = confirm(
-        `Total de tu compra: $${totalFinal.toFixed(2)}\n\n¿Deseas proceder con el pago?`
-    );
-
-    if (confirmar) {
+    const totalFinal = total * 1.16;
+    if (confirm(`Total de tu compra: $${totalFinal.toFixed(2)}\n\n¿Deseas proceder con el pago?`)) {
         mostrarNotificacion('¡Compra realizada exitosamente!');
-        carrito = [];
-        guardarCarrito();
-        actualizarCarrito();
-        closeCart();
+        carrito = []; guardarCarrito(); actualizarCarrito(); closeCart();
     }
 }
 
-// ==================== FUNCIONES DEL MODAL ====================
+// ==================== MODAL ====================
 const modal = document.getElementById('cart-modal');
 const cartBtn = document.getElementById('cart-btn');
 const closeBtn = document.querySelector('.close');
-
 cartBtn.addEventListener('click', openCart);
 closeBtn.addEventListener('click', closeCart);
-
-window.addEventListener('click', function(event) {
-    if (event.target === modal) {
-        closeCart();
-    }
-});
-
-function openCart() {
-    modal.classList.add('show');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeCart() {
-    modal.classList.remove('show');
-    document.body.style.overflow = 'auto';
-}
+window.addEventListener('click', function(event) { if (event.target === modal) closeCart(); });
+function openCart() { modal.classList.add('show'); document.body.style.overflow = 'hidden'; }
+function closeCart() { modal.classList.remove('show'); document.body.style.overflow = 'auto'; }
 
 // ==================== FORMULARIO DE CONTACTO ====================
 function configurarEventos() {
@@ -301,17 +195,12 @@ function configurarEventos() {
     if (contactForm) {
         contactForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            const inputs = this.querySelectorAll('input, textarea');
-            inputs.forEach(input => input.value = '');
-            mostrarNotificacion('¡Mensaje enviado exitosamente! Nos pondremos en contacto pronto.');
+            this.querySelectorAll('input, textarea').forEach(input => input.value = '');
+            mostrarNotificacion('¡Mensaje enviado exitosamente!');
         });
     }
-
-    // Configurar menú hamburguesa
     const hamburger = document.getElementById('hamburger');
-    if (hamburger) {
-        hamburger.addEventListener('click', toggleMenu);
-    }
+    if (hamburger) hamburger.addEventListener('click', toggleMenu);
 }
 
 function toggleMenu() {
@@ -332,71 +221,19 @@ function toggleMenu() {
 
 // ==================== NOTIFICACIONES ====================
 function mostrarNotificacion(mensaje) {
-    // Crear elemento de notificación
     const notification = document.createElement('div');
-    notification.style.cssText = `
-        position: fixed;
-        top: 80px;
-        right: 20px;
-        background: var(--success-color);
-        color: white;
-        padding: 15px 20px;
-        border-radius: 5px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        z-index: 3000;
-        animation: slideIn 0.3s ease;
-    `;
+    notification.style.cssText = `position:fixed;top:80px;right:20px;background:var(--success-color);color:white;padding:15px 20px;border-radius:5px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:3000;`;
     notification.textContent = mensaje;
-
     document.body.appendChild(notification);
-
-    setTimeout(() => {
-        notification.style.animation = 'slideOut 0.3s ease';
-        setTimeout(() => notification.remove(), 300);
-    }, 3000);
+    setTimeout(() => notification.remove(), 3000);
 }
 
-// Agregar estilos de animación
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from {
-            opacity: 0;
-            transform: translateX(400px);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-
-    @keyframes slideOut {
-        from {
-            opacity: 1;
-            transform: translateX(0);
-        }
-        to {
-            opacity: 0;
-            transform: translateX(400px);
-        }
-    }
-`;
-document.head.appendChild(style);
-
-// ==================== BÚSQUEDA Y FILTROS AVANZADOS ====================
+// ==================== BÚSQUEDA ====================
 function buscarProductos(termino) {
-    const termino_lower = termino.toLowerCase();
-    const productosFiltrados = productos.filter(p =>
-        p.nombre.toLowerCase().includes(termino_lower) ||
-        p.descripcion.toLowerCase().includes(termino_lower)
-    );
-    renderizarProductos(productosFiltrados);
+    const t = termino.toLowerCase();
+    renderizarProductos(productos.filter(p => p.nombre.toLowerCase().includes(t) || p.descripcion.toLowerCase().includes(t)));
 }
 
-// ==================== SYNC CON LOCALSTORAGE ====================
 window.addEventListener('storage', function(e) {
-    if (e.key === 'carrito') {
-        carrito = JSON.parse(e.newValue) || [];
-        actualizarCarrito();
-    }
+    if (e.key === 'carrito') { carrito = JSON.parse(e.newValue) || []; actualizarCarrito(); }
 });
